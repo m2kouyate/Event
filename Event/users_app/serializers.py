@@ -88,12 +88,15 @@ class UserProfileSerializer(serializers.ModelSerializer):
         return profile
 
     def update(self, instance, validated_data):
-        # Обновляем поля модели User
         username = validated_data.pop('username', instance.user.username)
         first_name = validated_data.pop('first_name', instance.user.first_name)
         last_name = validated_data.pop('last_name', instance.user.last_name)
         password = validated_data.pop('password', None)
         password_confirm = validated_data.pop('password_confirm', None)
+
+        if username != instance.user.username:
+            if User.objects.filter(username=username).exclude(pk=instance.user.pk).exists():
+                raise serializers.ValidationError({"username": "This username is already taken."})
 
         instance.user.username = username
         instance.user.first_name = first_name
@@ -102,7 +105,6 @@ class UserProfileSerializer(serializers.ModelSerializer):
         if password and password == password_confirm:
             instance.user.set_password(password)
 
-        # Обновляем поля модели UserProfile
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
 

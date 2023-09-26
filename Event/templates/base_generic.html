@@ -16,10 +16,15 @@
   <header>
     <div class="navbar">
       <div>
+      {% if request.resolver_match.url_name != 'events' %}
+        <a href="{% url 'event_app:events' %}">Events List</a>
+      {% endif %}
+    </div>
+      <div>
         {% if user.is_authenticated %}
           <span>Username:
-            {% if user.profile.id %}
-              <a href="{% url 'users_app:profile_detail' user.profile.id %}">{{ user.username }}</a>
+            {% if user.userprofile.pk %}
+              <a href="{% url 'users_app:profile_detail' user.userprofile.pk %}">{{ user.username }}</a>
             {% else %}
               {{ user.username }}
             {% endif %}

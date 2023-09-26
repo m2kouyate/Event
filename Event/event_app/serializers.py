@@ -10,11 +10,12 @@ class UserSerializer(serializers.ModelSerializer):
 
 
 class EventSerializer(serializers.ModelSerializer):
-    creator = UserSerializer(read_only=True)
-    participants = UserSerializer(many=True, read_only=True)
+    creator = serializers.PrimaryKeyRelatedField(read_only=True)
+    participants = serializers.PrimaryKeyRelatedField(many=True, queryset=User.objects.all(), required=False)
 
     class Meta:
         model = Event
         fields = '__all__'
+
 
 

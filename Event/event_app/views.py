@@ -3,14 +3,11 @@ from django.http import Http404
 from django.urls import reverse_lazy, reverse
 from django.views.generic import ListView, CreateView, UpdateView, DeleteView, DetailView
 from rest_framework.exceptions import PermissionDenied
-from rest_framework.renderers import JSONRenderer
-
-from .models import Event
 from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
 from django.views import View
 from django.http import HttpResponseRedirect
-
+from django.shortcuts import get_object_or_404
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -26,6 +23,11 @@ class EventViewSet(viewsets.ModelViewSet):
         if self.request.user != instance.creator:
             raise PermissionDenied("You don't have permission to modify this event.")
 
+    def perform_create(self, serializer):
+        if not self.request.user.is_authenticated:
+            raise PermissionDenied("You need to be logged in to create an event.")
+        serializer.save(creator=self.request.user)
+
     def perform_destroy(self, instance):
         self.check_creator(instance)
         instance.delete()
@@ -35,7 +37,7 @@ class EventViewSet(viewsets.ModelViewSet):
         serializer.save()
 
     def list(self, request, *args, **kwargs):
-        queryset = self.get_queryset()
+        queryset = self.get_queryset().select_related('creator').prefetch_related('participants')
         serializer = self.get_serializer(queryset, many=True)
         return Response({"error": None, "result": serializer.data}, status=status.HTTP_200_OK)
 
@@ -72,11 +74,17 @@ class EventListView(ListView):
     context_object_name = 'events'
     ordering = ['-date_created']
 
+    def get_queryset(self):
+        return Event.objects.all().select_related('creator').prefetch_related('participants')
+
 
 class EventDetailView(DetailView):
     model = Event
     template_name = 'events/event_detail.html'
     context_object_name = 'event'
+
+    def get_queryset(self):
+        return Event.objects.select_related('creator').prefetch_related('participants')
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -110,6 +118,9 @@ class EventUpdateView(UpdateView):
             raise Http404("You are not allowed to edit this Event")
         return super().dispatch(request, *args, **kwargs)
 
+    def get_queryset(self):
+        return Event.objects.select_related('creator')
+
     def get_success_url(self):
         return reverse('event_app:event_detail', args=[str(self.object.id)])
 
@@ -126,25 +137,23 @@ class EventDeleteView(DeleteView):
             raise Http404("You are not allowed to delete this Event")
         return super().dispatch(request, *args, **kwargs)
 
+    def get_queryset(self):
+        return Event.objects.select_related('creator')
 
-@method_decorator(login_required, name='dispatch')
+
 class JoinEventView(View):
     def post(self, request, event_id):
-        event = Event.objects.get(id=event_id)
-
+        event = get_object_or_404(Event, id=event_id)
         event.participants.add(request.user)
-
         return HttpResponseRedirect(reverse('event_app:event_detail', args=[event_id]))
 
 
-@method_decorator(login_required, name='dispatch')
 class UnjoinEventView(View):
     def post(self, request, event_id):
-        event = Event.objects.get(id=event_id)
-
+        event = get_object_or_404(Event, id=event_id)
         event.participants.remove(request.user)
-
         return HttpResponseRedirect(reverse('event_app:event_detail', args=[event_id]))
+
 
 
 

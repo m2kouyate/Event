@@ -17,7 +17,7 @@ from .serializers import UserProfileSerializer
 
 
 class UserProfileViewSet(viewsets.ModelViewSet):
-    queryset = UserProfile.objects.all().order_by('-date_registered')
+    queryset = UserProfile.objects.all().select_related('user').order_by('-date_registered')
     serializer_class = UserProfileSerializer
 
     def perform_create(self, serializer):
@@ -93,6 +93,9 @@ class ProfileUpdate(UpdateView):
     form_class = ProfileUpdateForm
     template_name = 'users/profile_edit.html'
 
+    def get_queryset(self):
+        return UserProfile.objects.select_related('user')
+
     def dispatch(self, request, *args, **kwargs):
         obj = self.get_object()
         if obj.user != self.request.user:
@@ -126,6 +129,9 @@ class ProfileDelete(DeleteView):
     model = UserProfile
     template_name = 'users/profile_confirm_delete.html'
     success_url = reverse_lazy('users_app:register')
+
+    def get_queryset(self):
+        return UserProfile.objects.select_related('user')
 
     def dispatch(self, request, *args, **kwargs):
         obj = self.get_object()
