@@ -1,0 +1,53 @@
+{% extends "base_generic.html" %}
+
+{% block content %}
+<div class="event-detail" data-event-id="{{ event.id }}">
+  <h2>{{ event.title }}</h2>
+  <p>{{ event.text }}</p>
+  <p>Created at: {{ event.date_created }}</p>
+  <p>Created by: {{ event.creator.username }}</p>
+
+  {% if user.is_authenticated %}
+    {% if is_creator %}
+      <a href="{% url 'event_app:event_update' event.id %}">Edit</a>
+      <a href="{% url 'event_app:event_delete' event.id %}">Delete</a>
+    {% else %}
+      {% if user in event.participants.all %}
+        <form method="post" action="{% url 'event_app:unjoin_event' event.id %}" class="ajax-form" id="unjoinForm">
+          {% csrf_token %}
+          <button type="submit">Отменить участие</button>
+        </form>
+      {% else %}
+        <form method="post" action="{% url 'event_app:join_event' event.id %}" class="ajax-form" id="joinForm">
+          {% csrf_token %}
+          <button type="submit">Участвовать</button>
+        </form>
+      {% endif %}
+    {% endif %}
+  {% endif %}
+
+  {% if event.participants.all %}
+  <p>Participants:</p>
+  <ul>
+    {% for participant in event.participants.all %}
+      <li>
+        {% with profile=participant.userprofile %}
+          {% if profile %}
+            <a href="{% url 'users_app:profile_detail' profile.pk  %}">
+              {{ participant.username }}
+            </a>
+          {% else %}
+            {{ participant.username }}
+          {% endif %}
+        {% endwith %}
+      </li>
+    {% endfor %}
+  </ul>
+{% else %}
+  <p>No participants yet.</p>
+{% endif %}
+
+
+</div>
+
+{% endblock %}

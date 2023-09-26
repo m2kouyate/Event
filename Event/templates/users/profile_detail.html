@@ -1,0 +1,58 @@
+{% extends "base_generic.html" %}
+
+{% block title %}User Profile{% endblock %}
+
+{% block content %}
+  <div class="profile-page">
+  <h2>Profile Detail</h2>
+
+  <div>
+    <strong>Username:</strong> {{ profile.user.username }}
+  </div>
+
+  <div>
+    <strong>First Name:</strong> {{ profile.user.first_name }}
+  </div>
+
+  <div>
+    <strong>Last Name:</strong> {{ profile.user.last_name }}
+  </div>
+
+  <div>
+    <strong>Date of birth:</strong> {{ profile.date_of_birth }}
+  </div>
+
+  <div>
+    <strong>Registration date:</strong> {{ profile.date_registered }}
+  </div>
+
+  <h3>Created Events:</h3>
+  {% if profile.user.created_events.all %}
+    <ul>
+      {% for event in profile.user.created_events.all %}
+        <li><a href="{% url 'event_app:event_detail' event.pk %}">{{ event.title }}</a></li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p>This user hasn't created any events yet.</p>
+  {% endif %}
+
+  <h3>Participating Events:</h3>
+  {% if profile.user.participating_events.all %}
+    <ul>
+      {% for event in profile.user.participating_events.all %}
+        <li><a href="{% url 'event_app:event_detail' event.pk %}">{{ event.title }}</a></li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p>This user isn't participating in any events yet.</p>
+  {% endif %}
+
+    <hr/>
+
+  {% if user == profile.user %}
+    <a href="{% url 'users_app:profile_edit' profile.pk %}">Edit Profile</a>
+    <a href="{% url 'users_app:profile_delete' profile.pk %}">Delete Profile</a>
+  {% endif %}
+</div>
+{% endblock %}

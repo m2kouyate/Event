@@ -1,0 +1,14 @@
+{% extends "base_generic.html" %}
+
+{% block content %}
+<div class="registration-page">
+  <h2>Register</h2>
+  <form method="post">
+    {% csrf_token %}
+    {{ user_form.as_p }}
+    {{ profile_form.as_p }}
+    <button type="submit">Register</button>
+  </form>
+  <p>Already have an account? <a href="{% url 'users_app:login' %}">Login</a></p>
+</div>
+{% endblock %}
